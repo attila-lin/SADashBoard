@@ -25,35 +25,40 @@ function generServer(data) {
     return item;
 }
 
+function checkLinkWithOuterSwitcher(item) {
+    items.forEach(element => {
+
+    });
+}
+
+var allItems = {}
+
 $(document).ready(function(){
     console.log($("#ul"));
 
     $.getJSON( "http://127.0.0.1:8080/data/state_9.json", function( data ) {
-        var items = {};
-        // console.log(data)
 
         var item = generServer(data)
-        items[item.ListenAddr] = item
+        allItems[item.ListenAddr] = item
         
 
         data.OuterSwitcher.forEach(element => {
             var item = generServer(element)
-            items[item.ListenAddr] = item
+            allItems[item.ListenAddr] = item
         });
 
-        console.log(items);
+        console.log(allItems);
 
         var outList = [];
-        $.each( items, function( key, val ) {
+        $.each( allItems, function( key, val ) {
             outList.push( '<li class="nav-item"><a class="nav-link" href="#"><span data-feather="file-text"></span>' + key + '</a></li>' )
         });
 
-        // $.each( data, function( key, val ) {
-        //   items.push( "<li id='" + key + "'>" + val + "</li>" );
-        // });
         console.log(outList)
         
-        $("#ul").html('<ul class="nav flex-column mb-2">' +  outList.join( "" ) + '</ul>');
+        $("#ul").html('<ul class="nav flex-column mb-2">' +  outList.join( "" ) + '</ul>').click( function() {
+            console.log('111')
+        });
         console.log( $("#ul") )
     });
 });
