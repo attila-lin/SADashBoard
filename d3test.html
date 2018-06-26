@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-width: 1.5px;
+}
+
+</style>
+<svg width="7560" height="5500"></svg>
+<script src="https://d3js.org/d3.v4.js"></script>
+<script>
+
+var svg = d3.select("svg"),
+    // context = svg.node().getContext("2d"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+// svg.call(d3.zoom()
+//     .scaleExtent([1 / 2, 4])
+//     .on("zoom", zoomed));
+
+// drawPoints(d3.zoomIdentity);
+
+// function zoomed() {
+//   context.clearRect(0, 0, width, height);
+//   drawPoints(d3.event.transform);
+// }
+
+var simulation = d3.forceSimulation()
+    .force("charge", d3.forceManyBody().strength(-200))
+    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(10))
+    .force("x", d3.forceX(width / 2))
+    .force("y", d3.forceY(height / 2))
+    .on("tick", ticked);
+
+var link = svg.selectAll(".link"),
+    node = svg.selectAll(".node");
+
+d3.json("http://127.0.0.1:8080/data/result.json", function(error, result) {
+  if (error) throw error;
+
+  var nodes = [];
+  var links = [];
+
+  var nameKey = {}
+  var nodeKey = {};
+  var linkKey = {};
+  var dfs = function(node) {
+    if(node.OuterSwitcher) {
+      node.OuterSwitcher.forEach(element => {
+        if(!linkKey[node.Pid + ',' + element.Pid]){
+          linkKey[node.Pid + ',' + element.Pid] = true
+          links.push({"source": node.Pid, "target": element.Pid})
+        }
+        
+        dfs(element)
+      });
+    }
+    if(node.Service) {
+      node.Service.forEach(element => {
+        if(!linkKey[node.Pid + ',' + element.Pid]){
+          linkKey[node.Pid + ',' + element.Pid] = true
+          links.push({"source": node.Pid, "target": element.Pid})
+        }
+        dfs(element)
+      });
+    }
+    
+    if(!nodeKey[node.Pid]){
+      nodeKey[node.Pid] = true
+      nodes.push({"id": node.Pid, "Name": node.Name, "Mem": node.Mem})
+      nameKey[node.Name] = true
+    }
+    
+  }
+  dfs(result)
+
+  console.log(nameKey)
+
+  // var graph = {
+  //   "nodes": [
+  //     {"id": "red"},
+  //     {"id": "orange"},
+  //     {"id": "yellow"},
+  //     {"id": "green"},
+  //     {"id": "blue"},
+  //     {"id": "violet"}
+  //   ],
+  //   "links": [
+  //     {"source": "red", "target": "yellow"},
+  //     {"source": "red", "target": "blue"},
+  //     {"source": "red", "target": "green"}
+  //   ]
+  // }
+
+  var graph = {
+    "nodes": nodes,
+    "links": links
+  }
+
+  console.log(graph)
+
+
+  simulation.nodes(graph.nodes);
+  simulation.force("link").links(graph.links);
+  link = link
+    .data(graph.links)
+    .enter().append("line")
+      .attr("class", "link");
+
+  node = node
+    .data(graph.nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", function(d) {
+        if(d.Name.search("outer_switcher") != -1){
+          return 20
+        }
+        else if(d.Name.search("app_switcher") != -1){
+          return 10
+        }
+        else if(d.Name.search("gas") != -1){
+          return 10
+        }
+        else if(d.Name.search("master") != -1){
+          return 10
+        }
+        else if(d.Name.search("gateway") != -1){
+          return 10
+        }
+        else if(d.Name.search("guild") != -1){
+          return 10
+        }
+        else if(d.Name.search("httpproxy") != -1){
+          return 10
+        }
+        else if(d.Name.search("im") != -1){
+          return 10
+        }
+        else if(d.Name.search("inner_switcher") != -1){
+          return 10
+        }
+        else if(d.Name.search("login") != -1){
+          return 10
+        }
+        else if(d.Name.search("map") != -1){
+          return 10
+        }
+        else if(d.Name.search("playershop") != -1){
+          return 10
+        }
+        else if(d.Name.search("ranklist") != -1){
+          return 10
+        }
+        else if(d.Name.search("team") != -1){
+          return 10
+        }
+        else if(d.Name.search("database") != -1){
+          return 10
+        }
+      }
+
+    )
+      .style("fill", function(d) { 
+        if(d.Name.search("outer_switcher") != -1){
+          return "green"
+        }
+        else if(d.Name.search("app_switcher") != -1){
+          return "yellow"
+        }
+        else if(d.Name.search("gas") != -1){
+          return "blue"
+        }
+        else if(d.Name.search("master") != -1){
+          return "red"
+        }
+        else if(d.Name.search("gateway") != -1){
+          return "AQUA"
+        }
+        else if(d.Name.search("guild") != -1){
+          return "TEAL"
+        }
+        else if(d.Name.search("httpproxy") != -1){
+          return "NAVY"
+        }
+        else if(d.Name.search("im") != -1){
+          return "FUCHSIA"
+        }
+        else if(d.Name.search("inner_switcher") != -1){
+          return "GRAY"
+        }
+        else if(d.Name.search("login") != -1){
+          return "BLACK"
+        }
+        else if(d.Name.search("map") != -1){
+          return "MAROON"
+        }
+        else if(d.Name.search("playershop") != -1){
+          return "OLIVE"
+        }
+        else if(d.Name.search("ranklist") != -1){
+          return "LIME"
+        }
+        else if(d.Name.search("team") != -1){
+          return "PURPLE"
+        }
+        else if(d.Name.search("database") != -1){
+          return "SILVER"
+        }
+        else{
+          console.log("hehe", d.Name)
+          return d.id
+        }
+      });
+});
+
+function ticked() {
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  node.attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+}
+
+</script>
