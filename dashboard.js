@@ -9,9 +9,9 @@ function generServer(data) {
     item.Extra = data.Extra;
     item.ListenAddr = data.ListenAddr;
 
-    item.OuterSwitcher = {}
+    item.OuterSwitcher = []
     data.OuterSwitcher.forEach(element => {
-        item.OuterSwitcher[element.ListenAddr] = true;
+        item.OuterSwitcher.push(element.ListenAddr);
     });
 
     item.Service = {}
@@ -26,19 +26,32 @@ function checkLinkWithOuterSwitcher(key) {
     var item = allItems[key]
     var linked = {}
     $.each(allItems, function(index, val){
-        linked[index] = false;
+        linked[index] = 0;
     })
     $.each(item.OuterSwitcher, function(index, val){
-        linked[index] = true; 
+        linked[val] += 1; 
     });
 
-    linked[key] = true;
+    linked[key] += 1;
     var unlinked = {};
     $.each(linked, function(index, val){
-        if(!val) unlinked[index] = true;
+        if(val != 1) unlinked[index] = val;
     });
 
     return unlinked;
+}
+
+function genLink(index, data, headTypes) {
+    var bodyItems = [];
+    headTypes.forEach(element => {
+        if(element == 'ListenAddr') {
+            bodyItems.push($('<td></td>').html(index));
+        }
+        else {
+            bodyItems.push($('<td></td>').html(data));
+        }
+    });
+    return bodyItems;
 }
 
 function genService(data, headTypes) {
@@ -54,15 +67,7 @@ function genService(data, headTypes) {
     return bodyItems;
 }
 
-function onClickIndex(addr) {
-    var item = allItems[addr];
-
-    console.log($('#section'))
-    $('#section').html(addr);
-    console.log(addr);
-
-    var headTypes = ['#', 'Host', 'Cpu', 'Extra', 'Mem', 'Pid', 'SrvAddr'];
-    // head
+function createHead(headTypes) {
     var headItems = []
     headTypes.forEach(element => {
         headItems.push($('<th></th>').html(element));
@@ -72,10 +77,57 @@ function onClickIndex(addr) {
     headItems.forEach(element => {
         head.append(element);
     });
+
+    return head;
+}
+
+function onClickIndex(addr) {
+    var item = allItems[addr];
+    // 总显示
+    $('#section').html(addr);
+
+    var unlinked = checkLinkWithOuterSwitcher(addr)
+    var len = 0;
+    for (var o in unlinked) {
+        len++;
+    }
+    console.log('len', len)
+    if(len == 0) 
+        $('#unlinked-table').html('');
+    else{
+        // head
+        var headTypes = ['ListenAddr', 'linkTimes'];
+        var head = createHead(headTypes);
+        $('#unlinked-table').html(head);
+
+        // body
+        var bodyItems = [];
+        console.log(unlinked)
+        $.each(unlinked ,function(index, element) {
+            var item = genLink(index, element, headTypes);
+            var tr = $('<tr></tr>');
+            $.each(item, function(index, val){
+                tr.append(val);
+            });
+            // console.log('tr', tr);
+            bodyItems.push(tr);
+        });
+
+        var tbody = $('<tbody></tbody>').text('')
+        bodyItems.forEach(element => {
+            // console.log(element)
+            tbody.append(element);
+        })
+        $('#unlinked-table').append(tbody);
+    }
+    
+    var headTypes = ['#', 'Host', 'Cpu', 'Extra', 'Mem', 'Pid', 'SrvAddr'];
+    // head
+    var head = createHead(headTypes);
     $('#server-table').html(head);
 
     // body
-    console.log('item.Service', item.Service)
+    // console.log('item.Service', item.Service)
     var bodyItems = []
     
     $.each(item.Service, function(index, element) {
@@ -110,17 +162,13 @@ function onClickIndex(addr) {
         tbody.append(element);
     })
     $('#server-table').append(tbody);
-
-    // console.log(item.Service.Service) 
-    
-
 }
 
 var allItems = {}
 
 $(document).ready(function(){
 
-    $.getJSON( "http://127.0.0.1:8080/data/state_9.json", function( data ) {
+    $.getJSON( "http://127.0.0.1:8080/data/state_test.json", function( data ) {
 
         var item = generServer(data)
         allItems[item.ListenAddr] = item
@@ -158,8 +206,6 @@ $(document).ready(function(){
         outList.forEach(element => {
             $("#ul").append(element)
         });
-
-        console.log($('#server-table'))
 
         onClickIndex(firstItem)
         // allItems.forEach(value, key => {
